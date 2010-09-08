@@ -1,36 +1,46 @@
+#!/usr/bin/python
 
+import Image, ImageDraw, ImageFont
+import opencv
+from opencv import highgui
 import pygame
-import Image
-from pygame.locals import *
+from datetime import datetime
+import time
+import os
 import sys
 
-import opencv
-#this is important for capturing/displaying images
-from opencv import highgui 
+outfile = "/home/agrover/Desktop/camera.jpg"
+prevent_file = "/home/agrover/cam_ok"
+warning_sound = "/home/agrover/git/pysnapper/4321.wav"
+scp_path = "ca-server1:public_html"
+
+font = "/usr/share/fonts/truetype/freefont/FreeSans.ttf"
+font_size = 24
+
+try:
+    os.stat(prevent_file)
+except OSError:
+    sys.exit(-1)
+
+pygame.init()
+sound = pygame.mixer.Sound(warning_sound)
+sound.set_volume(0.4)
+sound.play()
+time.sleep(4)
 
 camera = highgui.cvCreateCameraCapture(0)
-def get_image():
-    im = highgui.cvQueryFrame(camera)
-    # Add the line below if you need it (Ubuntu 8.04+)
-    #im = opencv.cvGetMat(im)
-    #convert Ipl image to PIL image
-    return opencv.adaptors.Ipl2PIL(im) 
+ipl = highgui.cvQueryFrame(camera)
+im = opencv.adaptors.Ipl2PIL(ipl) 
 
-fps = 30.0
-pygame.init()
-window = pygame.display.set_mode((640,480))
-pygame.display.set_caption("WebCam Demo")
-screen = pygame.display.get_surface()
+now = datetime.now()
+date_str = now.ctime()
 
-while True:
-    events = pygame.event.get()
-    for event in events:
-        if event.type == QUIT or event.type == KEYDOWN:
-            sys.exit(0)
-    im = get_image()
-    pg_img = pygame.image.frombuffer(im.tostring(), im.size, im.mode)
-    screen.blit(pg_img, (0,0))
-    pygame.display.flip()
-    pygame.time.delay(int(1000 * 1.0/fps))
+draw = ImageDraw.Draw(im)
+draw_font = ImageFont.truetype(font, font_size)
+draw.text((10,10), date_str, font=draw_font)
 
+im.save(outfile, "JPEG")
 
+highgui.cvReleaseCapture(camera)
+
+os.system("scp %s %s" % (outfile, scp_path))
