@@ -1,8 +1,8 @@
 #!/usr/bin/python
 
-import Image, ImageDraw, ImageFont
-import opencv
-from opencv import highgui
+from PIL import Image, ImageDraw, ImageFont
+import cv2
+import cv2.cv as cv
 import pygame
 from datetime import datetime
 import time
@@ -28,9 +28,9 @@ sound.set_volume(0.4)
 sound.play()
 time.sleep(4)
 
-camera = highgui.cvCreateCameraCapture(0)
-ipl = highgui.cvQueryFrame(camera)
-im = opencv.adaptors.Ipl2PIL(ipl) 
+camera = cv.CaptureFromCAM(1)
+ipl = cv.QueryFrame(camera)
+im = Image.frombytes("RGB", cv.GetSize(ipl), ipl.tostring())
 
 now = datetime.now()
 date_str = now.ctime()
@@ -41,6 +41,4 @@ draw.text((10,10), date_str, font=draw_font)
 
 im.save(outfile, "JPEG")
 
-highgui.cvReleaseCapture(camera)
-
-os.system("scp %s %s" % (outfile, scp_path))
+# os.system("scp %s %s" % (outfile, scp_path))
